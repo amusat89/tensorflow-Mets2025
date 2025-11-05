@@ -3,27 +3,27 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import json
+import os
 
-# Set page config
 st.set_page_config(
     page_title="Metabolic Syndrome Predictor",
     page_icon="🏥",
     layout="wide"
 )
 
-# CORRECT PATH - model is in same directory
-MODEL_PATH = 'my_mets_classifier.keras'
-
-# Load the model
+# Load model - CORRECT PATH
 @st.cache_resource
 def load_model():
     try:
-        model = tf.keras.models.load_model(MODEL_PATH)
+        model = tf.keras.models.load_model('my_mets_classifier.keras')
         st.success("✅ Model loaded successfully!")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
-        return None
+        st.stop()
+
+model = load_model()
+
 
 # Define feature names (you should save this from your training)
 feature_names = [
