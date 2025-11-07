@@ -5,21 +5,30 @@ import pandas as pd
 import json
 import os
 
-# Set environment variable to prevent macOS issues
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 st.set_page_config(
     page_title="Metabolic Syndrome Predictor",
     page_icon="🏥",
     layout="wide"
 )
 
-# Debug: Show current files
-st.write("## 🔍 Debug: Checking Files")
-current_files = os.listdir('.')
-st.write("Files in directory:", [f for f in current_files if f.endswith('.keras')])
 
-# Define feature names
+# Load model - CORRECT PATH
+@st.cache_resource
+def load_model():
+    try:
+        model = tf.keras.models.load_model('my_mets_classifier.keras')
+        st.success("✅ Model loaded successfully!")
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        st.stop()
+
+# Initialize model variable
+model = None 
+model = load_model()
+
+
+# Define feature names (you should save this from your training)
 feature_names = [
     'LBDAPBSI', 'BMXBMI', 'BMXWAIST', 'Systolic_BP', 'Diastolic_BP', 
     'RIDAGEYR', 'RIAGENDR', 'DXXSATA', 'DXXSATM', 'DXXVFATA', 
@@ -28,35 +37,13 @@ feature_names = [
     'Fasting_hrs'
 ]
 
-# Load model - FIXED: Only load once
-@st.cache_resource
-def load_model():
-    model_path = 'my_mets_classifier.keras'
-    
-    # Check if file exists first
-    if not os.path.exists(model_path):
-        st.error(f"❌ Model file not found: {model_path}")
-        st.info("Please make sure 'my_mets_classifier.keras' is in the same folder as app.py")
-        return None
-    
-    try:
-        model = tf.keras.models.load_model(model_path)
-        st.success("✅ Model loaded successfully!")
-        return model
-    except Exception as e:
-        st.error(f"❌ Error loading model: {e}")
-        return None
-
-# Load model (ONCE)
-model = load_model()
-
-# Stop if model failed to load
-if model is None:
-    st.stop()
-
 # App title
 st.title("🏥 Metabolic Syndrome Prediction")
 st.markdown("Predict metabolic syndrome risk using clinical measurements")
+
+# Add a banner image for visual appeal
+st.image("https://via.placeholder.com/700x150/ADD8E6/000000?text=Metabolic+Health+Banner", 
+         caption="Understanding your metabolic health is key to well-being.")
 
 # Input form
 st.header("Patient Clinical Data")
@@ -110,9 +97,14 @@ with st.expander("Other Measurements"):
 # Prediction
 if st.button("Predict Metabolic Syndrome", type="primary"):
     try:
-        # Prepare input in correct format for multi-input model
+        # Prepare input in correct order
+        # prediction_input = [] # This block might not be needed
+        # for feature in feature_names:
+        #     prediction_input.append([input_data[feature]])
+        
+        # Convert to correct format
         prediction_dict = {}
-        for feature in feature_names:
+        for i, feature in enumerate(feature_names):
             prediction_dict[feature] = np.array([[input_data[feature]]])
         
         # Make prediction
@@ -120,7 +112,7 @@ if st.button("Predict Metabolic Syndrome", type="primary"):
         probability = tf.sigmoid(prediction[0][0]).numpy()
         
         # Display results
-        st.header("🎯 Prediction Results")
+        st.header("♥️  Prediction Results")
         
         col1, col2 = st.columns(2)
         
